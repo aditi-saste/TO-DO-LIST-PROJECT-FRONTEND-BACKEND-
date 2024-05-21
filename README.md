@@ -52,14 +52,14 @@ Ensure you have the following installed on your machine:
 
 ## Project Structure
 
-to-do-list-app/
-├── public/
-│ ├── index.html
-│ ├── style.css
-│ └── script.js
-├── server.js
-├── package.json
-└── README.md
+"to-do-list-app/"
+"├── public/"
+"│ ├── index.html"
+"│ ├── style.css"
+"│ └── script.js"
+"├── server.js"
+"├── package.json"
+"└── README.md"
 
 **public/**: Contains static files (HTML, CSS, JavaScript)
 - **server.js**: Express server setup
