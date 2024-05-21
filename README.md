@@ -50,16 +50,6 @@ Ensure you have the following installed on your machine:
 
     By default, the application will be running on `http://localhost:3000`.
 
-## Project Structure
-
-"to-do-list-app/"
-"├── public/"
-"│ ├── index.html"
-"│ ├── style.css"
-"│ └── script.js"
-"├── server.js"
-"├── package.json"
-"└── README.md"
 
 **public/**: Contains static files (HTML, CSS, JavaScript)
 - **server.js**: Express server setup
