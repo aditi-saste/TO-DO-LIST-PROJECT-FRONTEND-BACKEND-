@@ -300,8 +300,8 @@
             }
         }
 
-        // Fetch all tasks on page load
-        fetchTasks();
+       
+        
     </script>
 </body>
 </html>
