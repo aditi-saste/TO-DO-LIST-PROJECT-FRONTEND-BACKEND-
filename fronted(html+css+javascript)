@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #B9EBFF;
+        }
+
+        .navbar {
+            background-color: #1682e6;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        
+
+        .navbar .logo h1 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 24px;
+        }
+
+        .navbar .search-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center; /* Center the search container */
+        }
+
+        .search-container input {
+            padding: 5px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .search-container button {
+            background-color: #ffffff;
+            color: #1682e6;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-container button:hover {
+            background-color: #f2f2f2;
+        }
+
+        
+
+        .container {
+            width: 1000px;
+            padding: 20px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        h3 {
+            margin-bottom: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+            background-color: #80ef7a;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* General button styling */
+        .edit-btn, .delete-btn, .done-btn, .add-btn {
+            background-color: #1682e6;
+            color: #ffffff;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            margin-left: 5px; /* Adding margin to space out buttons */
+            gap: 0px;
+        }
+
+        .edit-btn:hover, .delete-btn:hover, .done-btn:hover, .add-btn:hover {
+            background-color: #105db0;
+        }
+
+        /* Individual button styling */
+        .edit-btn, .delete-btn, .done-btn, .add-btn {
+            margin-left: auto; /* Move buttons to the right end */
+        }
+
+        /* Button group styling */
+        .button-group {
+            display: flex;
+        }
+
+        .button-group button {
+            margin-left: 0; /* Remove any left margin */
+            margin-right: 0; /* Remove any right margin */
+            border-radius: 0; /* Remove border-radius to ensure no gaps */
+        }
+
+        /* Add a small border radius to the first and last buttons to make it look nicer */
+        .button-group button:first-child {
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+        }
+
+        .button-group button:last-child {
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+           
+            <h1>To-Do List</h1>
+        </div>
+        <div class="search-container">
+            <input type="date" id="search-date" placeholder="Search by date">
+            <button onclick="searchTasks()">Search</button>
+        </div>
+        
+    </div>
+
+    <div class="container">
+        <form id="task-form">
+            <label for="taskDate">Date:</label>
+            <input type="date" id="taskDate" name="taskDate" required>
+            <label for="taskEntry">Task:</label>
+            <input type="text" id="taskEntry" name="taskEntry" required>
+            <button type="submit" class="add-btn">Add Task</button>
+        </form>
+        
+        <div class="section">
+            <h3>Tasks:</h3>
+            <ul id="taskList"></ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('task-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const taskDate = document.getElementById('taskDate').value;
+            const taskEntry = document.getElementById('taskEntry').value;
+
+            try {
+                await addTask(taskDate, taskEntry);
+                fetchTasks();
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        });
+
+        async function fetchTasks() {
+            try {
+                const response = await fetch('/tasks');
+                const tasks = await response.json();
+                const taskList = document.getElementById('taskList');
+                taskList.innerHTML = '';
+
+                tasks.forEach(task => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <span>${task.date}: ${task.entry} ${task.done ? '(Done)' : ''}</span>
+                        <div class="button-group">
+                        <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
+                        <button class="done-btn" onclick="markTaskAsDone('${task._id}')">Done</button>
+                        </div>
+                    `;
+                    taskList.insertBefore(listItem, taskList.firstChild);
+                });
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+            }
+        }
+
+        async function addTask(date, entry) {
+            const response = await fetch('/task', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ taskDate: date, taskEntry: entry }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add task');
+            }
+        }
+
+        async function deleteTask(taskId) {
+            try {
+                const response = await fetch(`/task/${taskId}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    fetchTasks();
+                } else {
+                    console.error('Failed to delete task');
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+
+        async function editTask(taskId) {
+            const newEntry = prompt('Enter the new task description:');
+            if (newEntry) {
+                try {
+                    const response = await fetch(`/task/${taskId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ entry: newEntry }),
+                    });
+
+                    if (response.ok) {
+                        fetchTasks();
+                    } else {
+                        console.error('Failed to edit task');
+                    }
+                } catch (error) {
+                    console.error('Error editing task:', error);
+                }
+            }
+        }
+
+        async function markTaskAsDone(taskId) {
+            try {
+                const response = await fetch(`/task/done/${taskId}`, {
+                    method: 'PUT',
+                });
+
+                if (response.ok) {
+                    fetchTasks();
+                } else {
+                    console.error('Failed to mark task as done');
+                }
+            } catch (error) {
+                console.error('Error marking task as done:', error);
+            }
+        }
+
+        async function searchTasks() {
+            const date = document.getElementById('search-date').value;
+            if (date) {
+                try {
+                    const response = await fetch(`/tasks?date=${date}`);
+                    const tasks = await response.json();
+                    const taskList = document.getElementById('taskList');
+                    taskList.innerHTML = '';
+
+                    tasks.forEach(task => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <span>${task.date}: ${task.entry} ${task.done ? '(Done)' : ''}</span>
+                            <button class="edit-btn" onclick="editTask('${task._id}')">Edit</button>
+                            <button class="delete-btn" onclick="deleteTask('${task._id}')">Delete</button>
+                            <button class="done-btn" onclick="markTaskAsDone('${task._id}')">Done</button>
+                        `;
+                        taskList.appendChild(listItem);
+                    });
+                } catch (error) {
+                    console.error('Error fetching tasks by date:', error);
+                }
+            }
+        }
+
+        // Fetch all tasks on page load
+        fetchTasks();
+    </script>
+</body>
+</html>
