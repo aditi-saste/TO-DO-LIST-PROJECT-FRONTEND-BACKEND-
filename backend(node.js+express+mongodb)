@@ -1,0 +1,197 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const path = require('path');
+const { MongoClient, ObjectId } = require('mongodb');
+
+const app = express();
+
+// Connection URI
+const uri = "mongodb://localhost:27017";
+const dbName = 'taskentry';
+
+// Middleware to parse request bodies
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+// Serve the HTML file for GET requests to the root URL
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'todolist.html'));
+});
+
+// Route to handle task submission
+app.post('/task', async (req, res) => {
+    const date = req.body.taskDate;
+    const entry = req.body.taskEntry;
+
+    try {
+        await insertDocument(date, entry);
+        res.send('Task added successfully');
+    } catch (error) {
+        console.error("Error inserting document:", error);
+        res.status(500).send('Error adding task');
+    }
+});
+
+// Route to handle task search by date
+app.get('/tasks', async (req, res) => {
+    const date = req.query.date;
+
+    try {
+        const tasks = date ? await findDocumentsByDate(date) : await findAllDocuments();
+        res.json(tasks);
+    } catch (error) {
+        console.error("Error finding documents:", error);
+        res.status(500).send('Error retrieving tasks');
+    }
+});
+
+// Route to handle task deletion
+app.delete('/task/:id', async (req, res) => {
+    const taskId = req.params.id;
+
+    try {
+        await deleteDocument(taskId);
+        res.send('Task deleted successfully');
+    } catch (error) {
+        console.error("Error deleting document:", error);
+        res.status(500).send('Error deleting task');
+    }
+});
+
+// Route to handle marking task as done
+app.put('/task/done/:id', async (req, res) => {
+    const taskId = req.params.id;
+
+    try {
+        await markTaskAsDone(taskId);
+        res.send('Task marked as done');
+    } catch (error) {
+        console.error("Error marking task as done:", error);
+        res.status(500).send('Error marking task as done');
+    }
+});
+
+// Route to handle editing a task
+app.put('/task/:id', async (req, res) => {
+    const taskId = req.params.id;
+    const updatedTask = req.body;
+
+    try {
+        await updateDocument(taskId, updatedTask);
+        res.send('Task updated successfully');
+    } catch (error) {
+        console.error("Error updating task:", error);
+        res.status(500).send('Error updating task');
+    }
+});
+
+// Function to insert a document into MongoDB
+async function insertDocument(date, entry) {
+    let client;
+
+    try {
+        client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection('tasks');
+        const data = { date, entry, done: false };
+        await collection.insertOne(data);
+    } finally {
+        if (client) {
+            await client.close();
+        }
+    }
+}
+
+// Function to find documents by date
+async function findDocumentsByDate(date) {
+    let client;
+
+    try {
+        client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection('tasks');
+        const tasks = await collection.find({ date }).toArray();
+        return tasks;
+    } finally {
+        if (client) {
+            await client.close();
+        }
+    }
+}
+
+// Function to find all documents
+async function findAllDocuments() {
+    let client;
+
+    try {
+        client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection('tasks');
+        const tasks = await collection.find({}).toArray();
+        return tasks;
+    } finally {
+        if (client) {
+            await client.close();
+        }
+    }
+}
+
+// Function to update a document
+async function updateDocument(taskId, updatedTask) {
+    let client;
+
+    try {
+        client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection('tasks');
+        await collection.updateOne({ _id: new ObjectId(taskId) }, { $set: updatedTask });
+    } finally {
+        if (client) {
+            await client.close();
+        }
+    }
+}
+
+// Function to delete a document by ID
+async function deleteDocument(taskId) {
+    let client;
+
+    try {
+        client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection('tasks');
+        await collection.deleteOne({ _id: new ObjectId(taskId) });
+    } finally {
+        if (client) {
+            await client.close();
+        }
+    }
+}
+
+// Function to mark a task as done
+async function markTaskAsDone(taskId) {
+    let client;
+
+    try {
+        client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        await client.connect();
+        const db = client.db(dbName);
+        const collection = db.collection('tasks');
+        await collection.updateOne({ _id: new ObjectId(taskId) }, { $set: { done: true } });
+    } finally {
+        if (client) {
+            await client.close();
+        }
+    }
+}
+
+// Start the server
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
